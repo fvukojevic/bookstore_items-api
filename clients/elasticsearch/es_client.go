@@ -3,16 +3,16 @@ package elasticsearch
 import (
 	"context"
 	"fmt"
-	"github.com/fvukojevic/bookstore_items-api/logger"
+	"github.com/fvukojevic/bookstore_util-go/utils/logger"
 	"github.com/olivere/elastic"
 	"time"
 )
 
-const(
+const (
 	envEsHost = "envEsHost"
 )
 
-var(
+var (
 	Client esClientInterface = &esClient{}
 )
 
@@ -26,13 +26,13 @@ type esClient struct {
 }
 
 func Init() {
-	//log := logger.GetLogger()
+	log := logger.GetLogger()
 
 	client, err := elastic.NewClient(
 		elastic.SetURL("http://127.0.0.1:9200"),
 		elastic.SetHealthcheckInterval(10*time.Second),
-		//elastic.SetErrorLog(log),
-		//elastic.SetInfoLog(log),
+		elastic.SetErrorLog(log),
+		elastic.SetInfoLog(log),
 		elastic.SetSniff(false),
 	)
 	if err != nil {
@@ -42,7 +42,7 @@ func Init() {
 	Client.SetClient(client)
 }
 
-func(c *esClient) Index(index string, doc interface{}) (*elastic.IndexResponse, error) {
+func (c *esClient) Index(index string, doc interface{}) (*elastic.IndexResponse, error) {
 	ctx := context.Background()
 	res, err := c.client.Index().
 		Index(index).
@@ -57,6 +57,6 @@ func(c *esClient) Index(index string, doc interface{}) (*elastic.IndexResponse, 
 	return res, nil
 }
 
-func(c *esClient) SetClient(client *elastic.Client) {
+func (c *esClient) SetClient(client *elastic.Client) {
 	c.client = client
 }
