@@ -2,6 +2,8 @@ package elasticsearch
 
 import (
 	"context"
+	"fmt"
+	"github.com/fvukojevic/bookstore_items-api/logger"
 	"github.com/olivere/elastic"
 	"time"
 )
@@ -16,7 +18,7 @@ var(
 
 type esClientInterface interface {
 	SetClient(client *elastic.Client)
-	Index(interface{}) (*elastic.IndexResponse, error)
+	Index(index string, doc interface{}) (*elastic.IndexResponse, error)
 }
 
 type esClient struct {
@@ -40,9 +42,19 @@ func Init() {
 	Client.SetClient(client)
 }
 
-func(c *esClient) Index(interface{}) (*elastic.IndexResponse, error) {
+func(c *esClient) Index(index string, doc interface{}) (*elastic.IndexResponse, error) {
 	ctx := context.Background()
-	return c.client.Index().Do(ctx)
+	res, err := c.client.Index().
+		Index(index).
+		BodyJson(doc).
+		Do(ctx)
+
+	if err != nil {
+		logger.Error(fmt.Sprintf("error when trying to index the document in index %s", index), err)
+		return nil, err
+	}
+
+	return res, nil
 }
 
 func(c *esClient) SetClient(client *elastic.Client) {
