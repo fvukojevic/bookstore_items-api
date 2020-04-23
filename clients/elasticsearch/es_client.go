@@ -19,6 +19,7 @@ var (
 type esClientInterface interface {
 	SetClient(client *elastic.Client)
 	Index(index string, doc interface{}) (*elastic.IndexResponse, error)
+	Get(index string, id string) (*elastic.GetResult, error)
 }
 
 type esClient struct {
@@ -57,6 +58,21 @@ func (c *esClient) Index(index string, doc interface{}) (*elastic.IndexResponse,
 	return res, nil
 }
 
+func (c *esClient) Get(index string, id string) (*elastic.GetResult, error) {
+	ctx := context.Background()
+
+	result, err := c.client.Get().
+		Index(index).
+		Id(id).
+		Do(ctx)
+	if err != nil {
+		logger.Error(fmt.Sprintf("error when trying to get item by id %s", id), err)
+		return nil, err
+	}
+	return result, nil
+}
+
 func (c *esClient) SetClient(client *elastic.Client) {
 	c.client = client
 }
+
