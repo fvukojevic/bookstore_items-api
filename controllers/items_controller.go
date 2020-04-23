@@ -7,8 +7,10 @@ import (
 	"github.com/fvukojevic/bookstore_items-api/utils/http_utils"
 	"github.com/fvukojevic/bookstore_oauth-go/oauth"
 	"github.com/fvukojevic/bookstore_util-go/utils/errors"
+	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 type ItemsControlllerInterface interface {
@@ -63,5 +65,15 @@ func (controller itemController) Create(w http.ResponseWriter, r *http.Request) 
 }
 
 func (controller itemController) Get(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	itemId := strings.TrimSpace(vars["id"])
 
+	item, err := services.GetItemsService().Get(itemId)
+
+	if err != nil {
+		http_utils.RespondError(w, *err)
+		return
+	}
+
+	http_utils.RespondJson(w, http.StatusOK, item)
 }

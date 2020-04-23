@@ -26,5 +26,11 @@ func (service itemService) Create(item items.Item) (*items.Item, *errors.RestErr
 }
 
 func (service itemService) Get(id string) (*items.Item, *errors.RestErr) {
-	return nil, errors.NewBadRequestError("not implemented")
+	item := items.Item{Id: id}
+
+	if err := item.Get(); err != nil {
+		return nil, err
+	}
+
+	return &item, nil
 }
