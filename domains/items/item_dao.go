@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fvukojevic/bookstore_items-api/clients/elasticsearch"
+	"github.com/fvukojevic/bookstore_items-api/domains/queries"
 	"github.com/fvukojevic/bookstore_util-go/utils/errors"
 	"strings"
 )
@@ -38,4 +39,27 @@ func(i *Item) Get() *errors.RestErr {
 	}
 	i.Id = itemId
 	return nil
+}
+
+func (i *Item) Search(query queries.EsQuery) ([]Item, *errors.RestErr) {
+	result, err := elasticsearch.Client.Search(indexItems, query.Build())
+	if err != nil {
+		return nil, errors.NewInternalServerError(fmt.Sprintf("database error"))
+	}
+
+	items := make([]Item, result.TotalHits())
+	for index, hit := range result.Hits.Hits {
+		bytes, _ := hit.Source.MarshalJSON()
+		var item Item
+		if err := json.Unmarshal(bytes, &item); err != nil {
+			return nil, errors.NewInternalServerError("database error")
+		}
+		item.Id = hit.Id
+		items[index] = item
+	}
+
+	if len(items) == 0 {
+		return nil, errors.NewNotFoundError("no items found matching given criteria")
+	}
+	return items, nil
 }
