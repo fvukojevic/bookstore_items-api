@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"github.com/fvukojevic/bookstore_items-api/domains/items"
+	"github.com/fvukojevic/bookstore_items-api/domains/queries"
 	"github.com/fvukojevic/bookstore_items-api/services"
 	"github.com/fvukojevic/bookstore_items-api/utils/http_utils"
 	"github.com/fvukojevic/bookstore_oauth-go/oauth"
@@ -16,6 +17,7 @@ import (
 type ItemsControlllerInterface interface {
 	Create(w http.ResponseWriter, r *http.Request)
 	Get(w http.ResponseWriter, r *http.Request)
+	Search(w http.ResponseWriter, r *http.Request)
 }
 
 type itemController struct {
@@ -76,4 +78,28 @@ func (controller itemController) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http_utils.RespondJson(w, http.StatusOK, item)
+}
+
+func (controller itemController) Search(w http.ResponseWriter, r *http.Request) {
+	bytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		apiErr := errors.NewBadRequestError("invalid json body")
+		http_utils.RespondError(w, *apiErr)
+		return
+	}
+	defer r.Body.Close()
+
+	var query queries.EsQuery
+	if err := json.Unmarshal(bytes, &query); err != nil {
+		apiErr := errors.NewBadRequestError("invalid json body")
+		http_utils.RespondError(w, *apiErr)
+		return
+	}
+
+	items, searchErr := services.GetItemsService().Search(query)
+	if searchErr != nil {
+		http_utils.RespondError(w, *searchErr)
+		return
+	}
+	http_utils.RespondJson(w, http.StatusOK, items)
 }
